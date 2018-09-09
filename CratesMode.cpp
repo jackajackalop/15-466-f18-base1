@@ -131,7 +131,7 @@ CratesMode::CratesMode() {
 
 	{ //Camera looking at the origin:
 		Scene::Transform *transform = scene.new_transform();
-		transform->position = glm::vec3(0.0f, -10.0f, 1.0f);
+		transform->position = glm::vec3(0.0f, -20.0f, 10.0f);
 		//Cameras look along -z, so rotate view to look at origin:
 		transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		camera = scene.new_camera(transform);
@@ -159,29 +159,40 @@ bool CratesMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_siz
 			controls.backward = (evt.type == SDL_KEYDOWN);
 			return true;
 		} else if (evt.key.keysym.scancode == SDL_SCANCODE_LEFT) {
-		//	controls.left = (evt.type == SDL_KEYDOWN);
-			camera->transform->rotation = glm::normalize(
-				camera->transform->rotation
-				* glm::angleAxis(0.1f, glm::vec3(0.0f, 1.0f, 0.0f)));
-			return true;
+			controls.left = (evt.type == SDL_KEYDOWN);
+						return true;
 		} else if (evt.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
-		//	controls.right = (evt.type == SDL_KEYDOWN);
-			camera->transform->rotation = glm::normalize(
-				camera->transform->rotation
-				* glm::angleAxis(-0.1f, glm::vec3(0.0f, 1.0f, 0.0f)));
-			return true;
+			controls.right = (evt.type == SDL_KEYDOWN);
+						return true;
 		}
 	}
 	return false;
 }
 
 void CratesMode::update(float elapsed) {
-	glm::mat3 directions = glm::mat3_cast(camera->transform->rotation);
+	glm::mat3 directions = glm::mat3_cast(player->transform->rotation);
 	float amt = 5.0f * elapsed;
-	if (controls.right) camera->transform->position += amt * directions[0];
-	if (controls.left) camera->transform->position -= amt * directions[0];
-	if (controls.backward) camera->transform->position += amt * directions[2];
-	if (controls.forward) camera->transform->position -= amt * directions[2];
+	if (controls.right){
+		player->transform->rotation = glm::normalize(
+			player->transform->rotation
+			* glm::angleAxis(-0.05f, glm::vec3(0.0f, 1.0f, 0.0f)));
+	}
+	if (controls.left){
+		player->transform->rotation = glm::normalize(
+			player->transform->rotation
+			* glm::angleAxis(0.05f, glm::vec3(0.0f, 1.0f, 0.0f)));
+	}
+	//TODO make player go in direction they are turned haha
+	if (controls.backward){
+	       	player->transform->position += amt * directions[2];
+	}
+	if (controls.forward){
+	       	player->transform->position -= amt * directions[2];
+	}
+	camera->transform->position = player->transform->position
+		+ 20.0f * directions[2]
+		+ 10.0f * directions[1];
+	camera->transform->rotation = player->transform->rotation;
 
 	{ //set sound positions:
 		glm::mat4 cam_to_world = camera->transform->make_local_to_world();
@@ -189,17 +200,13 @@ void CratesMode::update(float elapsed) {
 		//camera looks down -z, so right is +x:
 		Sound::listener.set_right( glm::normalize(cam_to_world[0]) );
 
-		if (loop) {
-//			glm::mat4 large_crate_to_world = large_crate->transform->make_local_to_world();
-//			loop->set_position( large_crate_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) );
-		}
 	}
 
 	dot_countdown -= elapsed;
 	if (dot_countdown <= 0.0f) {
 		dot_countdown = (rand() / float(RAND_MAX) * 2.0f) + 0.5f;
-//		glm::mat4x3 small_crate_to_world = small_crate->transform->make_local_to_world();
-//		sample_dot->play( small_crate_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) );
+		glm::mat4x3 player_to_world = player->transform->make_local_to_world();
+		sample_dot->play(player_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) );
 	}
 }
 

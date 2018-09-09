@@ -20,7 +20,7 @@
 #include <random>
 
 Load< MeshBuffer > crates_meshes(LoadTagDefault, [](){
-	return new MeshBuffer(data_path("crates.pnc"));
+	return new MeshBuffer(data_path("land.pnc"));
 });
 
 Load< GLuint > crates_meshes_for_vertex_color_program(LoadTagDefault, [](){
@@ -37,8 +37,8 @@ Load< Sound::Sample > sample_loop(LoadTagDefault, [](){
 CratesMode::CratesMode() {
 	//----------------
 	//set up scene:
-	//TODO: this should load the scene from a file!
 
+//next chunk of code from Tiffany Li my light my savior the potato of my heart
 	auto attach_object = [this](Scene::Transform *transform, std::string const &name) {
 		Scene::Object *object = scene.new_object(transform);
 		object->program = vertex_color_program->program;
@@ -51,19 +51,83 @@ CratesMode::CratesMode() {
 		object->count = mesh.count;
 		return object;
 	};
+        std::ifstream file("land.scene", std::ios::binary);
 
-	{ //build some sort of content:
-		//Crate at the origin:
-		Scene::Transform *transform1 = scene.new_transform();
-		transform1->position = glm::vec3(1.0f, 0.0f, 0.0f);
-		large_crate = attach_object(transform1, "Crate");
-		//smaller crate on top:
-		Scene::Transform *transform2 = scene.new_transform();
-		transform2->set_parent(transform1);
-		transform2->position = glm::vec3(0.0f, 0.0f, 1.5f);
-		transform2->scale = glm::vec3(0.5f);
-		small_crate = attach_object(transform2, "Crate");
-	}
+        std::vector< char > strings;
+        read_chunk(file, "str0", &strings);
+
+        struct TransformData {
+            int parent_ref;
+            uint32_t obj_name_begin, obj_name_end;
+            float pos_x, pos_y, pos_z;
+            float rot_x, rot_y, rot_z, rot_w;
+            float scl_x, scl_y, scl_z;
+        };
+
+        std::vector< TransformData > transforms;
+        read_chunk(file, "xfh0", &transforms);
+
+	Scene::Transform *transform1 = scene.new_transform();
+	transform1->position = glm::vec3(1.0f, 0.0f, 0.0f);
+	player = attach_object(transform1, "Player");
+
+        std::function< Scene::Transform *(int) > construct_transforms = 
+		[&](int ref) -> Scene::Transform *{
+            if (transform_dict.find(ref) != transform_dict.end())
+                return transform_dict[ref];
+
+            TransformData *transform = (TransformData *)(&transforms[ref]);
+            Scene::Transform *new_transform = scene.new_transform();
+            new_transform->position = glm::vec3(transform->pos_x, transform->pos_y, 
+			    			transform->pos_z);
+            new_transform->rotation = glm::quat(transform->rot_w, transform->rot_x, 
+			    			transform->rot_y, transform->rot_z);
+            new_transform->scale = glm::vec3(transform->scl_x, transform->scl_y, 
+			    			transform->scl_z);
+            new_transform->parent = transform->parent_ref < 0 ? 
+		    nullptr : construct_transforms(transform->parent_ref);
+
+            if (!(transform->obj_name_begin <= transform->obj_name_end 
+				    && transform->obj_name_end <= strings.size())) {
+                throw std::runtime_error(
+				"object scene entry has out-of-range name begin/end");
+            }
+
+            transform_dict[ref] = new_transform;
+            return new_transform;
+        };
+
+        struct MeshData {
+        	int transform_ref;
+        	uint32_t name_begin, name_end;
+        };
+        std::vector< MeshData > sceneObjects;
+        read_chunk(file, "msh0", &sceneObjects);
+
+        for (auto const &entry : sceneObjects) {
+            if (!(entry.name_begin <= entry.name_end 
+				    && entry.name_end <= strings.size())) {
+                throw std::runtime_error(
+				"mesh scene entry has out-of-range name begin/end");
+            }
+            std::string meshName(&strings[0] + entry.name_begin, 
+			    &strings[0] + entry.name_end);
+
+            if (!(entry.transform_ref >= 0 
+				    && entry.transform_ref <= (int)transforms.size())) {
+                throw std::runtime_error(
+				"mesh scene entry has out of range transform ref");
+            }
+
+            Scene::Transform *transform_struct = 
+		    construct_transforms(entry.transform_ref);
+            Scene::Object *object = attach_object(transform_struct, meshName);
+            if (meshName == "Player") {
+                player = object;
+            }
+
+        }
+
 
 	{ //Camera looking at the origin:
 		Scene::Transform *transform = scene.new_transform();
@@ -74,7 +138,7 @@ CratesMode::CratesMode() {
 	}
 	
 	//start the 'loop' sample playing at the large crate:
-	loop = sample_loop->play(large_crate->transform->position, 1.0f, Sound::Loop);
+	loop = sample_loop->play(player->transform->position, 1.0f, Sound::Loop);
 }
 
 CratesMode::~CratesMode() {
@@ -88,48 +152,23 @@ bool CratesMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_siz
 	}
 	//handle tracking the state of WSAD for movement control:
 	if (evt.type == SDL_KEYDOWN || evt.type == SDL_KEYUP) {
-		if (evt.key.keysym.scancode == SDL_SCANCODE_W) {
+		if (evt.key.keysym.scancode == SDL_SCANCODE_UP) {
 			controls.forward = (evt.type == SDL_KEYDOWN);
 			return true;
-		} else if (evt.key.keysym.scancode == SDL_SCANCODE_S) {
+		} else if (evt.key.keysym.scancode == SDL_SCANCODE_DOWN) {
 			controls.backward = (evt.type == SDL_KEYDOWN);
 			return true;
-		} else if (evt.key.keysym.scancode == SDL_SCANCODE_A) {
-			controls.left = (evt.type == SDL_KEYDOWN);
-			return true;
-		} else if (evt.key.keysym.scancode == SDL_SCANCODE_D) {
-			controls.right = (evt.type == SDL_KEYDOWN);
-			return true;
-		}
-	}
-	//handle tracking the mouse for rotation control:
-	if (!mouse_captured) {
-		if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-			Mode::set_current(nullptr);
-			return true;
-		}
-		if (evt.type == SDL_MOUSEBUTTONDOWN) {
-			SDL_SetRelativeMouseMode(SDL_TRUE);
-			mouse_captured = true;
-			return true;
-		}
-	} else if (mouse_captured) {
-		if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-			SDL_SetRelativeMouseMode(SDL_FALSE);
-			mouse_captured = false;
-			return true;
-		}
-		if (evt.type == SDL_MOUSEMOTION) {
-			//Note: float(window_size.y) * camera->fovy is a pixels-to-radians conversion factor
-			float yaw = evt.motion.xrel / float(window_size.y) * camera->fovy;
-			float pitch = evt.motion.yrel / float(window_size.y) * camera->fovy;
-			yaw = -yaw;
-			pitch = -pitch;
+		} else if (evt.key.keysym.scancode == SDL_SCANCODE_LEFT) {
+		//	controls.left = (evt.type == SDL_KEYDOWN);
 			camera->transform->rotation = glm::normalize(
 				camera->transform->rotation
-				* glm::angleAxis(yaw, glm::vec3(0.0f, 1.0f, 0.0f))
-				* glm::angleAxis(pitch, glm::vec3(1.0f, 0.0f, 0.0f))
-			);
+				* glm::angleAxis(0.1f, glm::vec3(0.0f, 1.0f, 0.0f)));
+			return true;
+		} else if (evt.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
+		//	controls.right = (evt.type == SDL_KEYDOWN);
+			camera->transform->rotation = glm::normalize(
+				camera->transform->rotation
+				* glm::angleAxis(-0.1f, glm::vec3(0.0f, 1.0f, 0.0f)));
 			return true;
 		}
 	}
@@ -151,16 +190,16 @@ void CratesMode::update(float elapsed) {
 		Sound::listener.set_right( glm::normalize(cam_to_world[0]) );
 
 		if (loop) {
-			glm::mat4 large_crate_to_world = large_crate->transform->make_local_to_world();
-			loop->set_position( large_crate_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) );
+//			glm::mat4 large_crate_to_world = large_crate->transform->make_local_to_world();
+//			loop->set_position( large_crate_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) );
 		}
 	}
 
 	dot_countdown -= elapsed;
 	if (dot_countdown <= 0.0f) {
 		dot_countdown = (rand() / float(RAND_MAX) * 2.0f) + 0.5f;
-		glm::mat4x3 small_crate_to_world = small_crate->transform->make_local_to_world();
-		sample_dot->play( small_crate_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) );
+//		glm::mat4x3 small_crate_to_world = small_crate->transform->make_local_to_world();
+//		sample_dot->play( small_crate_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) );
 	}
 }
 

@@ -32,8 +32,8 @@
 int main(int argc, char **argv) {
 	struct {
 		//TODO: this is where you set the title and size of your game window
-		std::string title = "TODO: Game Title";
-		glm::uvec2 size = glm::uvec2(640, 400);
+		std::string title = "Tired Walk in Space";
+		glm::uvec2 size = glm::uvec2(1280, 800);
 	} config;
 
 	//------------  initialization ------------

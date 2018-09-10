@@ -22,12 +22,12 @@ WalkMesh::WalkMesh(std::string const &filename) {
 				pts.emplace_back(token);
 				token = strtok(NULL, " ");
 			}
-			if(!tri){
+			if(!tri && !pts.empty()){
 				float a = std::stof(pts[0]);
 				float b = std::stof(pts[1]);
 				float c = std::stof(pts[2]);
 				vertices.emplace_back(glm::vec3(a, b, c));
-			}else{
+			}else if(!pts.empty()){
 				uint32_t a = std::stoi(pts[0]);
 				uint32_t b = std::stoi(pts[1]);
 				uint32_t c = std::stoi(pts[2]);

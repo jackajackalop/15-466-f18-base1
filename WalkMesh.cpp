@@ -2,6 +2,7 @@
 
 WalkMesh(std::vector< glm::vec3 > const &vertices_, std::vector< glm::uvec3 > const &triangles_)
 	: vertices(vertices_), triangles(triangles_) {
+
 	//TODO: construct next_vertex map
 }
 

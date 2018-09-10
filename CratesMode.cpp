@@ -4,6 +4,7 @@
 #include "Load.hpp"
 #include "Sound.hpp"
 #include "MeshBuffer.hpp"
+#include "WalkMesh.hpp"
 #include "gl_errors.hpp" //helper for dumpping OpenGL error messages
 #include "read_chunk.hpp" //helper for reading a vector of structures from a file
 #include "data_path.hpp" //helper to get paths relative to executable
@@ -19,8 +20,14 @@
 #include <cstddef>
 #include <random>
 
+using namespace std;
+
 Load< MeshBuffer > crates_meshes(LoadTagDefault, [](){
 	return new MeshBuffer(data_path("land.pnc"));
+});
+
+Load< WalkMesh > walk_mesh(LoadTagDefault, [](){
+	return new WalkMesh(data_path("walk.blob"));
 });
 
 Load< GLuint > crates_meshes_for_vertex_color_program(LoadTagDefault, [](){

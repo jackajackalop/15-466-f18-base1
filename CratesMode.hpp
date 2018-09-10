@@ -3,6 +3,7 @@
 #include "Mode.hpp"
 
 #include "MeshBuffer.hpp"
+#include "WalkMesh.hpp"
 #include "GL.hpp"
 #include "Scene.hpp"
 #include "Sound.hpp"

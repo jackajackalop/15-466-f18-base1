@@ -110,14 +110,20 @@ for obj in bpy.data.objects:
     #https://blender.stackexchange.com/questions/1311/how-can-i-get-vertex-positions-from-a-mesh
     for vert in obj.data.vertices:
         blob.write(str(vert.co[0])+" "+str(vert.co[1])+" "+str(vert.co[2])+"\n");
+   
+    blob.write("normals\n");
+    for vert in obj.data.vertices:
+        blob.write(str(vert.normal[0])+" "+str(vert.normal[1])+" "+str(vert.normal[2])+"\n");
+
     
     blob.write("triangles\n");
-    
     for triangle in mesh.polygons:
         a = mesh.loops[triangle.loop_indices[0]].vertex_index;
         b = mesh.loops[triangle.loop_indices[1]].vertex_index;
         c = mesh.loops[triangle.loop_indices[2]].vertex_index;
         blob.write(str(a)+" "+str(b)+" "+str(c)+"\n");
+        blob.write(str(c)+" "+str(a)+" "+str(b)+"\n");
+        blob.write(str(b)+" "+str(c)+" "+str(a)+"\n");
 
 wrote = blob.tell()
 blob.close()

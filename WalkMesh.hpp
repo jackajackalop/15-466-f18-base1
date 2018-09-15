@@ -16,7 +16,7 @@ struct WalkMesh {
     std::vector< glm::uvec3 > triangles; //CCW-oriented
 
     //TODO: consider also loading vertex normals for interpolated "up" direction:
-    //std::vector< glm::vec3 > vertex_normals;
+    std::vector< glm::vec3 > vertex_normals;
 
     //This "next vertex" map includes [a,b]->c, [b,c]->a, and [c,a]->b for each triangle, and is useful for checking what's over an edge from a given point:
     std::unordered_map< glm::uvec2, uint32_t > next_vertex;
@@ -31,7 +31,7 @@ struct WalkMesh {
     WalkPoint start(glm::vec3 const &world_point) const;
 
     //used to update walk point:
-    void walk(WalkPoint &wp, glm::vec3 const &step) const;
+    glm::quat walk(WalkPoint &wp, glm::vec3 const &step) const;
 
     //used to read back results of walking:
     glm::vec3 world_point(WalkPoint const &wp) const {
@@ -41,11 +41,8 @@ struct WalkMesh {
     }
 
     glm::vec3 world_normal(WalkPoint const &wp) const {
-        //TODO: could interpolate vertex_normals instead of computing the triangle normal:
-        return glm::normalize(glm::cross(
-            vertices[wp.triangle.y] - vertices[wp.triangle.x],
-            vertices[wp.triangle.z] - vertices[wp.triangle.x]
-        ));
+	  return glm::normalize( glm::cross(vertices[wp.triangle.x]-vertices[wp.triangle.y],
+				    vertices[wp.triangle.y]-vertices[wp.triangle.z]));
     }
 
 };

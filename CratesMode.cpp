@@ -34,9 +34,6 @@ Load< GLuint > crates_meshes_for_vertex_color_program(LoadTagDefault, [](){
 	return new GLuint(crates_meshes->make_vao_for_program(vertex_color_program->program));
 });
 
-Load< Sound::Sample > sample_dot(LoadTagDefault, [](){
-	return new Sound::Sample(data_path("dot.wav"));
-});
 Load< Sound::Sample > sample_loop(LoadTagDefault, [](){
 	return new Sound::Sample(data_path("loop.wav"));
 });
@@ -180,6 +177,7 @@ bool CratesMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_siz
 
 void CratesMode::update(float elapsed) {
 	float amt = 10.0f * elapsed;
+	glm::quat rot = glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 	if (controls.right){
 		player->transform->rotation = glm::normalize(
 			player->transform->rotation
@@ -191,21 +189,23 @@ void CratesMode::update(float elapsed) {
 			* glm::angleAxis(0.05f, glm::vec3(0.0f, 1.0f, 0.0f)));
 	}
 	glm::mat3 directions = glm::mat3_cast(player->transform->rotation);
-	//TODO make player go in direction they are turned haha
 	if (controls.backward){
-//	       	player->transform->position += amt * directions[2];
 		glm::vec3 step = directions[2] * amt;
-		walk_mesh->walk(walk_point, step);
+		rot = walk_mesh->walk(walk_point, step);
 	}
 	if (controls.forward){
-	       	//player->transform->position -= amt * directions[2];		
 		glm::vec3 step = directions[2] * -amt;
-		walk_mesh->walk(walk_point, step);
+		rot = walk_mesh->walk(walk_point, step);
 	}
 	player->transform->position = walk_mesh->world_point(walk_point);
-	
+	//std::cout<<directions[2][0]<<" "<<directions[2][1]<<" "<<directions[2][2]<<std::endl;
+	player->transform->rotation = glm::normalize(
+				player->transform->rotation * rot);
+	directions = glm::mat3_cast(player->transform->rotation);
+	//std::cout<<directions[2][0]<<" "<<directions[2][1]<<" "<<directions[2][2]<<std::endl;
+
 	camera->transform->position = player->transform->position
-		+ 100.0f/*20.0f*/ * directions[2]
+		+ 100.0f * directions[2]
 		+ 10.0f * directions[1];
 	camera->transform->rotation = player->transform->rotation;
 
@@ -217,12 +217,6 @@ void CratesMode::update(float elapsed) {
 
 	}
 
-	dot_countdown -= elapsed;
-	if (dot_countdown <= 0.0f) {
-		dot_countdown = (rand() / float(RAND_MAX) * 2.0f) + 0.5f;
-		glm::mat4x3 player_to_world = player->transform->make_local_to_world();
-		sample_dot->play(player_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) );
-	}
 }
 
 void CratesMode::draw(glm::uvec2 const &drawable_size) {

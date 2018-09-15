@@ -182,61 +182,36 @@ bool adjacent_tri(glm::uvec3 a, glm::uvec3 b){
 
 void WalkMesh::walk(WalkPoint &wp, glm::vec3 const &step) const {
     //TODO: project step to barycentric coordinates to get weights_step
-    glm::vec3 world_step = step+world_point(wp);
-
+	glm::vec3 weights_step = world_point(wp)+step;
     glm::vec3 a = vertices[wp.triangle.x];
     glm::vec3 b = vertices[wp.triangle.y];
     glm::vec3 c = vertices[wp.triangle.z];
-    glm::vec3 proj_pt = closest_pt(a, b, c, world_step);
-    glm::vec3 new_step = get_barycentric(a, b, c, proj_pt);
-
-    bool crossed = false;
-    int which_bary;
-    if(new_step[0]<0||new_step[0]>1){
-        crossed = true;
-        which_bary = 0;
-    }else if(new_step[1]<0||new_step[1]>1){
-        crossed = true;
-        which_bary = 1;    
-    }else if(new_step[2]<0||new_step[2]>1){
-        crossed = true;
-        which_bary = 2;
-    }
-
-    if (!crossed) { //if a triangle edge is not crossed
-        wp.weights = new_step;
-    } else { //if a triangle edge is crossed
-        //TODO: wp.weights gets moved to triangle edge, 
-        //and step gets reduced
-        glm::vec3 step_adj = step;
-        if(new_step[which_bary]>1){
-            step_adj[which_bary] = new_step[which_bary]-1.0f;
-            new_step[which_bary] = 1.0f;
-        }else{
-            step_adj[which_bary] = 0.0f-new_step[which_bary];
-            new_step[which_bary] = 0.0f;
-        }
-        //if there is another triangle over the edge:
-
-        float minDist = -1.0f;
-        glm::uvec3 closest_tri;
-        for(glm::uvec3 current : triangles){
-            glm::vec3 a = vertices[current[0]];
-            glm::vec3 b = vertices[current[1]];
-            glm::vec3 c = vertices[current[2]];
-            glm::vec3 cp = closest_pt(a, b, c, world_step);
-            float dist = distance(cp, world_step);
-            if(minDist<0 || minDist>dist){
-                minDist = dist;
-                closest_tri = current;
-            }
-        }
-
-        if( adjacent_tri(wp.triangle, closest_tri)){
-            wp.triangle = closest_tri;
-            //TODO: step gets rotated over the edge
-        }else{ //else if there is no other triangle over the edge:
-            //TODO: step gets updated to slide along the edge
-        }
-    }
+    glm::vec3 proj_step = closest_pt(a, b, c, weights_step);
+	//TODO: when does wp.weights + t * weights_step cross a triangle edge?
+	glm::vec3 bary = get_barycentric(a, b, c, proj_step);
+    		float ta = -wp.weights[0]/bary[0];
+	float tb = -wp.weights[1]/bary[1];
+	float tc = -wp.weights[1]/bary[2];
+	float high_t = std::max(tc, std::max(ta,tb));//ha, high tea time for snacks
+	float low_t = std::min(tc, std::min(ta, tb));
+	if (!(high_t<=1.0&&low_t>=0.0)) { //if a triangle edge is not crossed
+		//TODO: wp.weights gets moved by weights_step, nothing else needs to be done.
+/*		std::cout<<"fjdklafj;dslkfjafj;d"<<std::endl;
+		std::cout<<bary[0]<<std::endl;
+    	std::cout<<bary[1]<<std::endl;
+    	std::cout<<bary[2]<<std::endl;
+	std::cout<<wp.weights[0]<<std::endl;
+    	std::cout<<wp.weights[1]<<std::endl;
+    	std::cout<<wp.weights[2]<<std::endl;
+*/
+		wp.weights = bary;
+	} else { //if a triangle edge is crossed
+		//TODO: wp.weights gets moved to triangle edge, and step gets reduced
+		//if there is another triangle over the edge:
+			//TODO: wp.triangle gets updated to adjacent triangle
+			//TODO: step gets rotated over the edge
+		//else if there is no other triangle over the edge:
+			//TODO: wp.triangle stays the same.
+			//TODO: step gets updated to slide along the edge
+	} 
 }

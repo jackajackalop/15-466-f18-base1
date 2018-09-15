@@ -43,6 +43,8 @@ struct CratesMode : public Mode {
 
 	bool mouse_captured = false;
 
+	WalkMesh::WalkPoint walk_point;
+
 	Scene scene;
 	Scene::Camera *camera = nullptr;
 

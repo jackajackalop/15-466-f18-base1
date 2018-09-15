@@ -131,6 +131,9 @@ CratesMode::CratesMode() {
             Scene::Object *object = attach_object(transform_struct, meshName);
             if (meshName == "Player") {
                 player = object;
+		walk_point = walk_mesh->start(glm::vec3(1.0f, 0.0f, 0.0f));
+		player->transform->position = walk_mesh->world_point(walk_point);
+
             }
 
         }
@@ -177,8 +180,7 @@ bool CratesMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_siz
 }
 
 void CratesMode::update(float elapsed) {
-	glm::mat3 directions = glm::mat3_cast(player->transform->rotation);
-	float amt = 5.0f * elapsed;
+//	float amt = 5.0f * elapsed;
 	if (controls.right){
 		player->transform->rotation = glm::normalize(
 			player->transform->rotation
@@ -189,15 +191,22 @@ void CratesMode::update(float elapsed) {
 			player->transform->rotation
 			* glm::angleAxis(0.05f, glm::vec3(0.0f, 1.0f, 0.0f)));
 	}
+	glm::mat3 directions = glm::mat3_cast(player->transform->rotation);
 	//TODO make player go in direction they are turned haha
 	if (controls.backward){
-	       	player->transform->position += amt * directions[2];
+//	       	player->transform->position += amt * directions[2];
+//		glm::vec3 step = directions[2] * amt;
+		//walk_mesh->walk(walk_point, step);
 	}
 	if (controls.forward){
-	       	player->transform->position -= amt * directions[2];
+	       	//player->transform->position -= amt * directions[2];		
+//		glm::vec3 step = directions[2] * -amt;
+		//walk_mesh->walk(walk_point, step);
 	}
+	//player->transform->position = walk_mesh->world_point(walk_point);
+	
 	camera->transform->position = player->transform->position
-		+ 20.0f * directions[2]
+		+ 100.0f/*20.0f*/ * directions[2]
 		+ 10.0f * directions[1];
 	camera->transform->rotation = player->transform->rotation;
 

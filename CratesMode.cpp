@@ -161,6 +161,12 @@ bool CratesMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_siz
 	}
 	//handle tracking the state of WSAD for movement control:
 	if (evt.type == SDL_KEYDOWN || evt.type == SDL_KEYUP) {
+		if(evt.key.keysym.scancode == SDL_SCANCODE_LSHIFT ||
+		   evt.key.keysym.scancode == SDL_SCANCODE_RSHIFT)
+			speed = 60.0f;
+		else
+			speed = 20.0f;
+		
 		if (evt.key.keysym.scancode == SDL_SCANCODE_UP) {
 			controls.forward = (evt.type == SDL_KEYDOWN);
 			return true;
@@ -184,9 +190,9 @@ bool CratesMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_siz
 }
 
 void CratesMode::update(float elapsed) {
-	if(timer>0) timer--;
+	if(timer>0) timer--; 
 	else show_pause_menu();
-	float amt = 20.0f * elapsed;
+	float amt = speed * elapsed;
 	glm::quat rot = glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 	if (controls.right){
 		player->transform->rotation = glm::normalize(
@@ -256,7 +262,7 @@ void CratesMode::draw(glm::uvec2 const &drawable_size) {
 
 		height = 0.1f;
 		message = "TIME " + to_string(timer);
-		draw_text(message, glm::vec2(0.6f * width, 0.8f), height, 
+		draw_text(message, glm::vec2(0.5f * width, 0.8f), height, 
 				glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
 
 		glUseProgram(0);

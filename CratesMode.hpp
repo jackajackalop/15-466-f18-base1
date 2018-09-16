@@ -52,6 +52,7 @@ struct CratesMode : public Mode {
 	std::map< int, Scene::Transform * > transform_dict;
 	
 	uint32_t timer = 1000;
+	float speed = 20.0f;
 
 	glm::vec3 old_up;
 	//this 'loop' sample is played at the large crate:

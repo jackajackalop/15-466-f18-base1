@@ -12,13 +12,13 @@ Screen Shot:
 
 How To Play:
 
-Use left and right arrow keys to change direction of the player. Press forward and backwards and watch as the player(sometimes) walk properly on the land. 
+Use left and right arrow keys to change direction of the player. Press forward and backwards and watch as the player(sometimes) walk properly on the land. Hold shift to run. 
 
 Changes From The Design Document:
-
-Basically none of the game was implemented besides the ability to walk, and the code to generate a (very simple) geometric landscape in blender. 
+The existence of beds and a win state, the existence of bhings, little messages and instructions, all failed to exist because I ran out of time. 
 
 Good / Bad / Ugly Code:
+
 The good: I think the my code to parse the walk mesh is very simplistic (and probably doesn't have many checks that the walk mesh is good and legitimate), but it is very readable and clear. 
 
 The bad: The code to keep the camera trained on the player. Parenting wasn't implemented, so it's just multipling by the rotation and setting the position equal to an offset from that of the players. 

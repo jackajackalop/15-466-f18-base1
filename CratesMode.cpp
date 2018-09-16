@@ -199,14 +199,14 @@ void CratesMode::update(float elapsed) {
 	}
 	player->transform->position = walk_mesh->world_point(walk_point);
 	//std::cout<<directions[2][0]<<" "<<directions[2][1]<<" "<<directions[2][2]<<std::endl;
-	player->transform->rotation = glm::normalize(
-				player->transform->rotation * rot);
+	player->transform->rotation = //glm::normalize(
+				player->transform->rotation * glm::normalize(rot);
 	directions = glm::mat3_cast(player->transform->rotation);
 	//std::cout<<directions[2][0]<<" "<<directions[2][1]<<" "<<directions[2][2]<<std::endl;
 
 	camera->transform->position = player->transform->position
 		+ 100.0f * directions[2]
-		+ 10.0f * directions[1];
+		+ 15.0f * directions[1];
 	camera->transform->rotation = player->transform->rotation;
 
 	{ //set sound positions:

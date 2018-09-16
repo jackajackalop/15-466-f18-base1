@@ -26,6 +26,10 @@ Load< MeshBuffer > crates_meshes(LoadTagDefault, [](){
 	return new MeshBuffer(data_path("land.pnc"));
 });
 
+Load< MeshBuffer > ui_meshes(LoadTagDefault, [](){
+	return new MeshBuffer(data_path("meshes.pnc"));
+});
+
 Load< WalkMesh > walk_mesh(LoadTagDefault, [](){
 	return new WalkMesh(data_path("walk.blob"));
 });
@@ -134,7 +138,6 @@ CratesMode::CratesMode() {
 
         }
 
-
 	{ //Camera looking at the origin:
 		Scene::Transform *transform = scene.new_transform();
 		transform->position = glm::vec3(0.0f, -20.0f, 10.0f);
@@ -181,6 +184,8 @@ bool CratesMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_siz
 }
 
 void CratesMode::update(float elapsed) {
+	if(timer>0) timer--;
+	else show_pause_menu();
 	float amt = 20.0f * elapsed;
 	glm::quat rot = glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 	if (controls.right){
@@ -206,11 +211,10 @@ void CratesMode::update(float elapsed) {
 	player->transform->rotation = //glm::normalize(
 				player->transform->rotation * glm::normalize(rot);
 	directions = glm::mat3_cast(player->transform->rotation);
-
-	camera->transform->position = player->transform->position
-		+ 80.0f * directions[2]
-		+ 15.0f * directions[1];
 	camera->transform->rotation = player->transform->rotation;
+	camera->transform->position = player->transform->position
+		+ 80.0f * directions[2]+15.0f*directions[1];
+
 
 	{ //set sound positions:
 		glm::mat4 cam_to_world = camera->transform->make_local_to_world();
@@ -250,6 +254,11 @@ void CratesMode::draw(glm::uvec2 const &drawable_size) {
 		draw_text(message, glm::vec2(-0.5f * width,-0.99f), height, glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
 		draw_text(message, glm::vec2(-0.5f * width,-1.0f), height, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
+		height = 0.1f;
+		message = "TIME " + to_string(timer);
+		draw_text(message, glm::vec2(0.6f * width, 0.8f), height, 
+				glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
+
 		glUseProgram(0);
 	}
 
@@ -263,13 +272,17 @@ void CratesMode::show_pause_menu() {
 	std::shared_ptr< Mode > game = shared_from_this();
 	menu->background = game;
 
-	menu->choices.emplace_back("PAUSED");
-	menu->choices.emplace_back("RESUME", [game](){
-		Mode::set_current(game);
-	});
+	if(timer>0){
+		menu->choices.emplace_back("PAUSED");
+		menu->choices.emplace_back("RESUME", [game](){
+			Mode::set_current(game);
+		});
+	}else{
+		menu->choices.emplace_back("GAME OVER");	
+	}
 	menu->choices.emplace_back("QUIT", [](){
-		Mode::set_current(nullptr);
-	});
+			Mode::set_current(nullptr);
+		});
 
 	menu->selected = 1;
 

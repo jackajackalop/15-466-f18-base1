@@ -4,8 +4,7 @@
 //Load.hpp is included because of the call_load_functions() call:
 #include "Load.hpp"
 
-//The 'GameMode' mode plays the game:
-#include "GameMode.hpp"
+//The 'CratesMode' mode plays the game:
 #include "CratesMode.hpp"
 //The 'Sound' header has functions for managing sound:
 #include "Sound.hpp"

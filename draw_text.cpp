@@ -1,4 +1,5 @@
 #include "draw_text.hpp"
+#include <iostream>
 
 #include "GL.hpp"
 #include "Load.hpp"
@@ -93,7 +94,6 @@ void draw_text(std::string const &text, glm::mat4 const &transform, glm::vec4 co
 			);
 			glUniformMatrix4fv(text_program_mvp_mat4, 1, GL_FALSE, glm::value_ptr(mvp));
 			glUniform4fv(text_program_color_vec4, 1, glm::value_ptr(color));
-
 			MeshBuffer::Mesh const &mesh = text_meshes->lookup(text.substr(i,1));
 			glDrawArrays(GL_TRIANGLES, mesh.start, mesh.count);
 		}

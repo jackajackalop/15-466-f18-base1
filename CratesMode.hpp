@@ -51,6 +51,8 @@ struct CratesMode : public Mode {
 	Scene::Object *player = nullptr;
 	std::map< int, Scene::Transform * > transform_dict;
 	
+	uint32_t timer = 1000;
+
 	glm::vec3 old_up;
 	//this 'loop' sample is played at the large crate:
 	std::shared_ptr< Sound::PlayingSample > loop;

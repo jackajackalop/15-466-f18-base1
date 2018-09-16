@@ -62,7 +62,6 @@ NAMES =
 	vertex_color_program
 	Scene
 	Mode
-	GameMode
 	CratesMode
 	MenuMode
 	Load

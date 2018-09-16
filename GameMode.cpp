@@ -115,6 +115,7 @@ bool GameMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 void GameMode::update(float elapsed) {
+
 	//if the roll keys are pressed, rotate everything on the same row or column as the cursor:
 	glm::quat dr = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 	float amt = elapsed * 1.0f;

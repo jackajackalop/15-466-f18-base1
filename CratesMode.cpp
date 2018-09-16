@@ -170,13 +170,18 @@ bool CratesMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_siz
 		} else if (evt.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
 			controls.right = (evt.type == SDL_KEYDOWN);
 						return true;
+		} else if (evt.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+			//open pause menu on 'ESCAPE':
+			show_pause_menu();
+			return true;
 		}
+
 	}
 	return false;
 }
 
 void CratesMode::update(float elapsed) {
-	float amt = 10.0f * elapsed;
+	float amt = 20.0f * elapsed;
 	glm::quat rot = glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 	if (controls.right){
 		player->transform->rotation = glm::normalize(
@@ -198,14 +203,12 @@ void CratesMode::update(float elapsed) {
 		rot = walk_mesh->walk(walk_point, step);
 	}
 	player->transform->position = walk_mesh->world_point(walk_point);
-	//std::cout<<directions[2][0]<<" "<<directions[2][1]<<" "<<directions[2][2]<<std::endl;
 	player->transform->rotation = //glm::normalize(
 				player->transform->rotation * glm::normalize(rot);
 	directions = glm::mat3_cast(player->transform->rotation);
-	//std::cout<<directions[2][0]<<" "<<directions[2][1]<<" "<<directions[2][2]<<std::endl;
 
 	camera->transform->position = player->transform->position
-		+ 100.0f * directions[2]
+		+ 80.0f * directions[2]
 		+ 15.0f * directions[1];
 	camera->transform->rotation = player->transform->rotation;
 
@@ -241,12 +244,7 @@ void CratesMode::draw(glm::uvec2 const &drawable_size) {
 
 	if (Mode::current.get() == this) {
 		glDisable(GL_DEPTH_TEST);
-		std::string message;
-		if (mouse_captured) {
-			message = "ESCAPE TO UNGRAB MOUSE * WASD MOVE";
-		} else {
-			message = "CLICK TO GRAB MOUSE * ESCAPE QUIT";
-		}
+		std::string message = "ESCAPE TO PAUSE";
 		float height = 0.06f;
 		float width = text_width(message, height);
 		draw_text(message, glm::vec2(-0.5f * width,-0.99f), height, glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));

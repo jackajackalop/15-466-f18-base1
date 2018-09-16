@@ -181,12 +181,9 @@ glm::quat WalkMesh::walk(WalkPoint &wp, glm::vec3 const &step) const {
     //when does wp.weights + t * weights_step cross a triangle edge?
     glm::vec3 proj_step = closest_pt(a, b, c, weights_step);
     glm::vec3 bary = get_barycentric(a, b, c, proj_step);
-    glm::vec3 bary_step = bary-wp.weights;
     float ta = -wp.weights[0]/bary[0];
     float tb = -wp.weights[1]/bary[1];
     float tc = -wp.weights[2]/bary[2];
-    float tmin = std::min(std::min((ta>=0?ta:10.0f), (tb>=0?tb:10.0f))
-		    , (tc>=0?tc:10.0f));
     glm::vec3 rot_edge;
     if (!cross(ta) && !cross(tb) && !cross(tc)) { 
 	//if a triangle edge is not crossed
@@ -194,21 +191,20 @@ glm::quat WalkMesh::walk(WalkPoint &wp, glm::vec3 const &step) const {
         wp.weights = bary;
     } else { //if a triangle edge is crossed
         //wp.weights gets moved to triangle edge, and step gets reduced
-	    glm::vec3 edge_coord = wp.weights+tmin*bary_step;
 	    glm::vec3 bump = glm::vec3(0.0f, 0.0f, 0.0f);
 	uint32_t curr1, curr2;
         if(cross(ta)){
             curr1 = wp.triangle.z;
             curr2 = wp.triangle.y;
-	    bump = glm::vec3(0.01f,0.0f,0.0f);
+	    bump = glm::vec3(0.001f,0.0f,0.0f);
         }else if(cross(tb)){
             curr1 = wp.triangle.x;
             curr2 = wp.triangle.z;
-	    bump = glm::vec3(0.0f,0.01f,0.0f);
+	    bump = glm::vec3(0.0f,0.001f,0.0f);
         }else{
             curr1 = wp.triangle.y;
             curr2 = wp.triangle.x;
-	    bump = glm::vec3(0.0f,0.0f,0.01f);
+	    bump = glm::vec3(0.0f,0.0f,0.001f);
         }
 	rot_edge = vertices[curr1]-vertices[curr2];
 
@@ -224,7 +220,9 @@ glm::quat WalkMesh::walk(WalkPoint &wp, glm::vec3 const &step) const {
             a = vertices[wp.triangle.x];
             b = vertices[wp.triangle.y];
             c = vertices[wp.triangle.z];
-            wp.weights = edge_coord+bump;
+            wp.weights = closest_pt(a, b, c, proj_step);
+	    wp.weights = get_barycentric(a, b, c, wp.weights)
+		    + bump;
             //step gets rotated over the edge
 
             glm::vec3 new_normal = world_normal(wp);
